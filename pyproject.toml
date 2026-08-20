@@ -28,7 +28,7 @@ traceaml = "traceaml.cli:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-traceaml = ["packs/*.json"]
+traceaml = ["packs/*.json", "web/*.html", "web/*.css", "web/*.js"]
 
 [tool.pytest.ini_options]
 addopts = "-q"

@@ -118,6 +118,12 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="unsafe; use only with synthetic local data",
     )
+    customer_demo = subparsers.add_parser(
+        "demo-ui", help="launch the synthetic customer demonstration"
+    )
+    customer_demo.add_argument("--host", default="127.0.0.1")
+    customer_demo.add_argument("--port", type=int, default=8765)
+    customer_demo.add_argument("--no-browser", action="store_true")
     args = parser.parse_args(argv)
     if args.command == "demo":
         print(json.dumps(run_demo(args.pack), indent=2, default=_json_default))
@@ -129,6 +135,10 @@ def main(argv: list[str] | None = None) -> int:
             args.development_plaintext,
         )
         print(json.dumps(result, indent=2, default=_json_default))
+    elif args.command == "demo-ui":
+        from .demo import run_demo_server
+
+        run_demo_server(args.host, args.port, open_browser=not args.no_browser)
     return 0
 
 

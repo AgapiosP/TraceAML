@@ -44,6 +44,18 @@ python -m pip install -e .
 traceaml demo --pack eu
 ```
 
+Launch the polished customer demonstration with three synthetic investigations:
+
+```bash
+traceaml demo-ui
+```
+
+The local workspace opens in a browser and demonstrates alert triage, evidence-linked
+findings, relationship graphs, jurisdiction switching, immutable auditing and the
+local/online LLM routing policy. It never contacts an LLM and must not be used with
+real customer data. See [`docs/customer-demo.md`](docs/customer-demo.md) for the
+five-minute walkthrough.
+
 Initialize a durable workspace with authenticated encryption. The key must be a
 base64-encoded 32-byte random value and is never written to the database:
 
@@ -88,6 +100,8 @@ src/traceaml/entities.py     tenant-scoped investigation entities
 src/traceaml/storage.py      SQLite migrations and repositories
 src/traceaml/security.py     authenticated field encryption
 src/traceaml/llm.py          provider policy and grounded LLM outputs
+src/traceaml/demo.py         synthetic customer-demo API and local server
+src/traceaml/web/            responsive investigation workspace
 src/traceaml/pipeline.py     application orchestration
 src/traceaml/packs/          jurisdiction-pack metadata
 tests/                       unit and end-to-end tests

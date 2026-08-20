@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <meta name="description" content="TraceAML synthetic customer demonstration">
+    <title>TraceAML · Investigation workspace</title>
+    <link rel="stylesheet" href="/app.css">
+    <script src="/app.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#workspace">Skip to investigation</a>
+    <div class="shell">
+      <aside class="sidebar" aria-label="Primary navigation">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">T</span>
+          <div><strong>TraceAML</strong><small>Investigation intelligence</small></div>
+        </div>
+        <nav>
+          <a href="#overview" class="nav-item active"><span aria-hidden="true">⌂</span> Overview</a>
+          <a href="#alert-queue" class="nav-item"><span aria-hidden="true">◎</span> Alert queue <b id="nav-count">3</b></a>
+          <a href="#investigation" class="nav-item"><span aria-hidden="true">◇</span> Investigations</a>
+          <a href="#relationships" class="nav-item"><span aria-hidden="true">⌘</span> Relationships</a>
+          <a href="#controls" class="nav-item"><span aria-hidden="true">◫</span> AI controls</a>
+          <a href="#audit" class="nav-item"><span aria-hidden="true">✓</span> Audit trail</a>
+        </nav>
+        <div class="sidebar-foot">
+          <div class="environment-dot"><span></span> Local workspace</div>
+          <p>Customer demonstration</p>
+          <p class="synthetic-label">Synthetic data only</p>
+        </div>
+      </aside>
+
+      <main id="workspace">
+        <header class="topbar">
+          <button class="mobile-menu" id="mobile-menu" aria-label="Toggle navigation">☰</button>
+          <div>
+            <p class="eyebrow">Investigation workspace</p>
+            <h1>Good morning, Maya</h1>
+          </div>
+          <div class="topbar-actions">
+            <label class="compact-field">Jurisdiction
+              <select id="pack-select" aria-label="Regulatory context">
+                <option value="eu">European Union</option>
+                <option value="uk">United Kingdom</option>
+                <option value="us">United States</option>
+                <option value="au">Australia</option>
+              </select>
+            </label>
+            <button class="tour-button" id="tour-button"><span aria-hidden="true">▶</span> Guided tour</button>
+            <div class="avatar" aria-label="Signed in as Maya Chen">MC</div>
+          </div>
+        </header>
+
+        <div class="demo-ribbon" role="note">
+          <span class="pulse-dot" aria-hidden="true"></span>
+          <strong>Live product demonstration</strong>
+          <span>All people, accounts and transactions shown here are fictional.</span>
+        </div>
+
+        <div class="content" id="overview">
+          <section class="metric-grid" aria-label="Workspace overview">
+            <article class="metric-card">
+              <div class="metric-icon amber" aria-hidden="true">◎</div>
+              <div><span>Open alerts</span><strong id="metric-alerts">—</strong><small>Across the synthetic portfolio</small></div>
+            </article>
+            <article class="metric-card">
+              <div class="metric-icon teal" aria-hidden="true">✓</div>
+              <div><span>Evidence coverage</span><strong id="metric-evidence">—</strong><small>Claims linked to evidence</small></div>
+            </article>
+            <article class="metric-card">
+              <div class="metric-icon blue" aria-hidden="true">⌁</div>
+              <div><span>Audit integrity</span><strong id="metric-audit">—</strong><small>Hash chain status</small></div>
+            </article>
+            <article class="metric-card">
+              <div class="metric-icon violet" aria-hidden="true">◷</div>
+              <div><span>Demo review time</span><strong id="metric-time">—</strong><small>Illustrative workflow</small></div>
+            </article>
+          </section>
+
+          <section class="workspace-grid">
+            <div class="primary-column">
+              <article class="panel case-panel" id="investigation">
+                <div class="case-heading">
+                  <div>
+                    <div class="breadcrumb"><span id="case-alert">—</span><span>Investigation</span></div>
+                    <h2 id="case-customer">Loading investigation…</h2>
+                    <p><span id="case-account">—</span> · <span id="case-segment">—</span></p>
+                  </div>
+                  <div class="case-actions">
+                    <span class="status-pill"><i></i> In review</span>
+                    <button class="secondary-button" id="copy-report">Copy report ID</button>
+                  </div>
+                </div>
+
+                <div class="risk-strip">
+                  <div class="risk-score"><span>Demo risk score</span><strong id="risk-score">—</strong><em id="risk-label">—</em></div>
+                  <div class="risk-context">
+                    <p id="case-summary">Loading evidence-grounded summary…</p>
+                    <div class="assurance-row">
+                      <span><b>✓</b> Evidence linked</span>
+                      <span><b>✓</b> Human decision required</span>
+                      <span><b>✓</b> Audit recorded</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="section-heading">
+                  <div><p class="eyebrow">Explainable findings</p><h3>Why this activity was flagged</h3></div>
+                  <span class="coverage-badge">100% cited</span>
+                </div>
+                <div id="claims" class="claim-list" aria-live="polite"></div>
+              </article>
+
+              <article class="panel graph-panel" id="relationships">
+                <div class="section-heading">
+                  <div><p class="eyebrow">Relationship intelligence</p><h3>Transaction network</h3></div>
+                  <span class="legend"><i class="subject-key"></i> Subject <i></i> Related</span>
+                </div>
+                <div class="graph-wrap">
+                  <canvas id="graph-canvas" aria-label="Transaction relationship graph"></canvas>
+                  <div id="graph-fallback" class="visually-hidden"></div>
+                </div>
+                <p class="graph-note">Select a different alert to rebuild this graph from that case’s synthetic transactions.</p>
+              </article>
+
+              <article class="panel" id="transactions-panel">
+                <div class="section-heading">
+                  <div><p class="eyebrow">Source activity</p><h3>Transactions in scope</h3></div>
+                  <button class="text-button" id="export-button">Prepare evidence manifest</button>
+                </div>
+                <div class="table-wrap">
+                  <table>
+                    <thead><tr><th>Transaction</th><th>Date</th><th>Route</th><th>Channel</th><th>Amount</th></tr></thead>
+                    <tbody id="transaction-body"></tbody>
+                  </table>
+                </div>
+              </article>
+            </div>
+
+            <aside class="secondary-column">
+              <article class="panel alert-panel" id="alert-queue">
+                <div class="section-heading"><div><p class="eyebrow">Priority queue</p><h3>Open alerts</h3></div><span id="queue-count" class="count-badge">—</span></div>
+                <div id="alert-list" class="alert-list" aria-label="Select an alert"></div>
+              </article>
+
+              <article class="panel regulatory-panel">
+                <div class="panel-symbol" aria-hidden="true">§</div>
+                <p class="eyebrow">Regulatory context</p>
+                <h3 id="pack-name">—</h3>
+                <p id="pack-details" class="muted">—</p>
+                <div id="pack-topics" class="tag-list"></div>
+                <details>
+                  <summary>Governance note</summary>
+                  <p id="pack-disclaimer"></p>
+                </details>
+              </article>
+
+              <article class="panel ai-panel" id="controls">
+                <div class="section-heading"><div><p class="eyebrow">AI governance</p><h3>Provider routing</h3></div><span class="shield" aria-hidden="true">◆</span></div>
+                <p class="muted">Test the real deny-by-default routing policy. This demonstration never contacts a model.</p>
+                <div class="segmented" role="group" aria-label="Provider location">
+                  <button data-provider="local" class="selected">Local model</button>
+                  <button data-provider="online">Online API</button>
+                </div>
+                <label class="field">Data classification
+                  <select id="classification-select">
+                    <option value="restricted">Restricted</option>
+                    <option value="confidential">Confidential</option>
+                    <option value="internal">Internal</option>
+                    <option value="public">Public</option>
+                  </select>
+                </label>
+                <div id="policy-result" class="policy-result checking" aria-live="polite">Checking policy…</div>
+              </article>
+
+              <article class="panel audit-panel" id="audit">
+                <div class="section-heading"><div><p class="eyebrow">Tamper evidence</p><h3>Recent audit events</h3></div><span class="verified">Verified</span></div>
+                <ol id="audit-list" class="audit-list"></ol>
+              </article>
+            </aside>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <div id="tour-coach" class="tour-coach" hidden>
+      <div><span id="tour-step">1 of 4</span><strong id="tour-title">Alert triage</strong><p id="tour-copy"></p></div>
+      <div><button id="tour-exit" class="text-button">Exit</button><button id="tour-next" class="tour-button">Next</button></div>
+    </div>
+    <noscript><p class="noscript">JavaScript is required for the interactive customer demonstration.</p></noscript>
+  </body>
+</html>
