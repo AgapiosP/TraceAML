@@ -52,18 +52,23 @@ cannot introduce uncited facts.
 
 ## Data and deployment
 
-v0.1 operates in memory and the CLI prints JSON locally. The next persistence
-adapter will use SQLite with migration support and application-level encryption
-hooks. No telemetry or network request occurs in the core.
+The original v0.1 engine remains available for deterministic in-memory demos. The
+v0.2 workspace adds tenant-scoped SQLite persistence, versioned migrations,
+authenticated field encryption, foreign-key integrity and database-immutable audit
+rows. No telemetry occurs in the core.
+
+LLM providers are outbound adapters behind a data-classification policy. Local and
+online providers are selected explicitly. Restricted evidence is denied to online
+providers by default, and a failed local model is never silently replaced with an
+online call.
 
 ## Planned extension ports
 
 - transaction and upstream-alert connectors;
-- SQLite/PostgreSQL repositories;
+- PostgreSQL repositories and multi-user transaction coordination;
 - batch and streaming rule engines;
 - calibrated model scorer plus model cards and drift evidence;
 - graph-store adapter;
 - local and remote LLM adapters behind a redaction/policy boundary;
 - signed audit checkpoints and export bundles;
 - synthetic scenario generation and control-effectiveness scoring.
-

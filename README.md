@@ -5,7 +5,7 @@ layer for financial-crime teams. It accepts alerts or transactions from existing
 systems, explains why activity was flagged, maps relationships, and produces an
 evidence-linked investigation record for a human decision.
 
-> **Status:** v0.1 foundation / pre-alpha. TraceAML is an investigation aid, not
+> **Status:** v0.2 development / pre-alpha. TraceAML is an investigation aid, not
 > legal advice, a filing system, or an autonomous decision-maker.
 
 ## Why this shape
@@ -15,7 +15,7 @@ initial product is a modular investigation layer that can sit after existing AML
 or fraud controls. The core remains jurisdiction-neutral; versioned regulatory
 packs describe local context for the EU, UK, US, and Australia.
 
-## v0.1 capabilities
+## Current capabilities
 
 - normalized transaction ingestion;
 - deterministic, explainable rule evaluation;
@@ -24,10 +24,15 @@ packs describe local context for the EU, UK, US, and Australia.
 - tamper-evident, append-only audit events;
 - versioned jurisdiction-pack metadata;
 - a local CLI demo with no runtime dependencies outside Python.
+- tenant-scoped SQLite persistence with versioned migrations;
+- detailed party, account, transaction, relationship, alert, and case records;
+- authenticated field encryption for sensitive JSON metadata;
+- database-enforced immutable audit rows with per-tenant hash chains;
+- deny-by-default routing between local and online LLM providers;
+- grounded LLM JSON outputs with mandatory evidence references.
 
-ML scoring, external LLM adapters, durable encrypted storage, user access
-controls, filing workflows, and synthetic control testing are intentionally
-outside this first slice. Their extension points are documented in
+Production APIs, user access controls, filing workflows, trained ML models, and
+synthetic control testing remain under development. Their extension points are documented in
 [`docs/architecture.md`](docs/architecture.md).
 
 ## Quick start
@@ -38,6 +43,18 @@ Python 3.11 or newer is required.
 python -m pip install -e .
 traceaml demo --pack eu
 ```
+
+Initialize a durable workspace with authenticated encryption. The key must be a
+base64-encoded 32-byte random value and is never written to the database:
+
+```bash
+export TRACEAML_FIELD_KEY="$(openssl rand -base64 32)"
+traceaml workspace-init --database data/traceaml.db \
+  --tenant-id example --tenant-name "Example tenant"
+```
+
+For synthetic local testing only, `--development-plaintext` bypasses field
+encryption. The application refuses that mode when production safeguards are enabled.
 
 Run the tests without installing third-party packages (macOS/Linux):
 
@@ -67,6 +84,10 @@ src/traceaml/rules.py        explainable detection rules
 src/traceaml/graph.py        dependency-free relationship graph
 src/traceaml/investigation.py evidence-bound report generation
 src/traceaml/audit.py        hash-chained audit events
+src/traceaml/entities.py     tenant-scoped investigation entities
+src/traceaml/storage.py      SQLite migrations and repositories
+src/traceaml/security.py     authenticated field encryption
+src/traceaml/llm.py          provider policy and grounded LLM outputs
 src/traceaml/pipeline.py     application orchestration
 src/traceaml/packs/          jurisdiction-pack metadata
 tests/                       unit and end-to-end tests
@@ -86,3 +107,10 @@ docs/                        architecture, roadmap, and governance notes
 
 See [`CONTRIBUTING.md`](CONTRIBUTING.md). Security issues should follow
 [`SECURITY.md`](SECURITY.md).
+
+Architecture references:
+
+- [`docs/data-model.md`](docs/data-model.md)
+- [`docs/security.md`](docs/security.md)
+- [`docs/llm-providers.md`](docs/llm-providers.md)
+- [`docs/deployment.md`](docs/deployment.md)

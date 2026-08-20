@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Callable
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from hashlib import sha256
-from typing import Any, Callable
+from typing import Any
 
 
 @dataclass(frozen=True, slots=True)
@@ -23,7 +24,7 @@ class AuditEvent:
 class AuditLog:
     def __init__(self, clock: Callable[[], datetime] | None = None) -> None:
         self._events: list[AuditEvent] = []
-        self._clock = clock or (lambda: datetime.now(timezone.utc))
+        self._clock = clock or (lambda: datetime.now(UTC))
 
     @staticmethod
     def _hash(body: dict[str, Any]) -> str:
@@ -68,4 +69,3 @@ class AuditLog:
                 return False
             previous_hash = event.event_hash
         return True
-

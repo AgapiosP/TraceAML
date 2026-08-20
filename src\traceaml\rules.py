@@ -87,8 +87,5 @@ class RuleEngine:
 
     def evaluate(self, transaction: Transaction) -> tuple[Finding, ...]:
         return tuple(
-            finding
-            for rule in self._rules
-            if (finding := rule.evaluate(transaction)) is not None
+            finding for rule in self._rules if (finding := rule.evaluate(transaction)) is not None
         )
-

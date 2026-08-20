@@ -71,4 +71,3 @@ class TraceAMLEngine:
             },
         )
         return report
-

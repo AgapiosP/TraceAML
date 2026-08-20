@@ -47,4 +47,3 @@ def load_pack(pack_id: str) -> JurisdictionPack:
         sources=tuple(value["sources"]),
         disclaimer=value["disclaimer"],
     )
-

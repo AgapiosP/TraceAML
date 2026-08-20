@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 from unittest import TestCase
 
@@ -9,7 +9,7 @@ class TransactionTests(TestCase):
     def test_normalizes_codes(self) -> None:
         transaction = Transaction(
             transaction_id="tx-1",
-            occurred_at=datetime.now(timezone.utc),
+            occurred_at=datetime.now(UTC),
             amount=Decimal("1.00"),
             currency="eur",
             originator_account="a",
@@ -32,4 +32,3 @@ class TransactionTests(TestCase):
                 originator_country="DE",
                 beneficiary_country="GB",
             )
-

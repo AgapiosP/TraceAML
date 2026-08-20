@@ -3,13 +3,13 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal, InvalidOperation
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 
-class Severity(str, Enum):
+class Severity(StrEnum):
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -68,7 +68,7 @@ class Transaction:
 
     def to_dict(self) -> dict[str, Any]:
         result = asdict(self)
-        result["occurred_at"] = self.occurred_at.astimezone(timezone.utc).isoformat()
+        result["occurred_at"] = self.occurred_at.astimezone(UTC).isoformat()
         result["amount"] = str(self.amount)
         return result
 
@@ -109,4 +109,3 @@ class InvestigationReport:
     evidence: tuple[Evidence, ...]
     related_accounts: tuple[str, ...]
     limitations: tuple[str, ...]
-

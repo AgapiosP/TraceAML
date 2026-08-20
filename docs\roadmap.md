@@ -12,8 +12,11 @@
 
 ## v0.2 — durable local investigation workspace
 
-- [ ] SQLite repositories and migrations
-- [ ] case lifecycle, notes, assignments, and human disposition
+- [x] SQLite repositories and migrations
+- [x] tenant-scoped party, account, transaction, relationship, alert, and case entities
+- [x] sensitive-field encryption and immutable per-tenant audit chains
+- [x] policy-controlled local/online LLM adapters and grounded-output validation
+- [ ] complete case lifecycle, notes, assignments, and human disposition
 - [ ] CSV/JSON import with quarantine and validation reports
 - [ ] local API and minimal investigator UI
 - [ ] encrypted evidence export bundle
@@ -40,4 +43,3 @@
 
 No release will claim legal or regulatory compliance. Production readiness
 requires security, privacy, model-risk, legal, and operational review.
-

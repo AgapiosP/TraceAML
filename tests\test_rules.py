@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 from unittest import TestCase
 
@@ -9,7 +9,7 @@ from traceaml.rules import CrossBorderRule, HighValueRule
 def transaction(amount: str = "100", destination: str = "DE") -> Transaction:
     return Transaction(
         transaction_id="tx-1",
-        occurred_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+        occurred_at=datetime(2026, 1, 1, tzinfo=UTC),
         amount=Decimal(amount),
         currency="EUR",
         originator_account="a",
@@ -30,4 +30,3 @@ class RuleTests(TestCase):
 
     def test_cross_border_rule_ignores_domestic_transfer(self) -> None:
         self.assertIsNone(CrossBorderRule().evaluate(transaction()))
-
