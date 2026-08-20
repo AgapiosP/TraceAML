@@ -1,0 +1,15 @@
+{
+  "pack_id": "eu",
+  "name": "European Union review context",
+  "version": "0.1.0",
+  "reviewed_on": "2026-08-20",
+  "authorities": ["European Commission", "EBA", "national competent authorities"],
+  "review_topics": ["AML/CFT controls", "data protection", "AI governance and transparency"],
+  "sources": [
+    "https://eur-lex.europa.eu/eli/reg/2024/1689/oj",
+    "https://eur-lex.europa.eu/eli/reg/2024/1624/oj"
+  ],
+  "disclaimer": "The EU pack is review context only and is not a determination of AI Act or AMLR classification or compliance."
+}
+
+

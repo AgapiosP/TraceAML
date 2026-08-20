@@ -1,0 +1,15 @@
+{
+  "pack_id": "uk",
+  "name": "United Kingdom review context",
+  "version": "0.1.0",
+  "reviewed_on": "2026-08-20",
+  "authorities": ["FCA", "NCA", "ICO"],
+  "review_topics": ["financial-crime systems and controls", "money-laundering regulations", "UK data protection"],
+  "sources": [
+    "https://www.fca.org.uk/firms/financial-crime",
+    "https://www.legislation.gov.uk/uksi/2017/692/contents"
+  ],
+  "disclaimer": "The UK pack is review context only and is not a determination of regulatory compliance or reporting obligations."
+}
+
+

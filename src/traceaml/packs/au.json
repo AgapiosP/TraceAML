@@ -1,0 +1,15 @@
+{
+  "pack_id": "au",
+  "name": "Australia review context",
+  "version": "0.1.0",
+  "reviewed_on": "2026-08-20",
+  "authorities": ["AUSTRAC", "OAIC"],
+  "review_topics": ["AML/CTF program controls", "suspicious matter review", "privacy"],
+  "sources": [
+    "https://www.austrac.gov.au/business/core-guidance/amlctf-programs",
+    "https://www.oaic.gov.au/privacy/australian-privacy-principles"
+  ],
+  "disclaimer": "The Australia pack is review context only and is not a determination of AML/CTF compliance or an SMR recommendation."
+}
+
+

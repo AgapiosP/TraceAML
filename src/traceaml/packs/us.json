@@ -1,0 +1,15 @@
+{
+  "pack_id": "us",
+  "name": "United States review context",
+  "version": "0.1.0",
+  "reviewed_on": "2026-08-20",
+  "authorities": ["FinCEN", "federal functional regulators"],
+  "review_topics": ["Bank Secrecy Act program controls", "suspicious activity review", "model risk governance"],
+  "sources": [
+    "https://www.fincen.gov/resources/statutes-and-regulations/bank-secrecy-act",
+    "https://www.federalreserve.gov/supervisionreg/srletters/sr1107.htm"
+  ],
+  "disclaimer": "The US pack is review context only and is not a determination of BSA compliance or a SAR filing recommendation."
+}
+
+
