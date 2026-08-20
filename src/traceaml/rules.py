@@ -92,4 +92,3 @@ class RuleEngine:
             if (finding := rule.evaluate(transaction)) is not None
         )
 
-

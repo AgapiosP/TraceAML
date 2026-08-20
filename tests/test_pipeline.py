@@ -46,4 +46,3 @@ class PipelineTests(TestCase):
         with self.assertRaisesRegex(ValueError, "duplicate"):
             engine.ingest(transaction)
 
-

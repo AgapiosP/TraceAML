@@ -13,4 +13,3 @@ class AuditTests(TestCase):
         self.assertEqual(second.previous_hash, first.event_hash)
         self.assertTrue(audit.verify())
 
-

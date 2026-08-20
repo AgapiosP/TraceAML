@@ -9,4 +9,3 @@ TraceAML is pre-alpha. Small, reviewable changes with tests are preferred.
 
 Do not add real customer, account, sanctions, or transaction data. Fixtures must
 be synthetic and clearly labelled.
-

@@ -69,4 +69,3 @@ class AuditLog:
             previous_hash = event.event_hash
         return True
 
-

@@ -67,4 +67,3 @@ hooks. No telemetry or network request occurs in the core.
 - signed audit checkpoints and export bundles;
 - synthetic scenario generation and control-effectiveness scoring.
 
-

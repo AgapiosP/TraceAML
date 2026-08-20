@@ -67,4 +67,3 @@ class InvestigationBuilder:
             if missing := set(claim.evidence_ids).difference(available):
                 raise EvidenceIntegrityError(f"claim cites missing evidence: {sorted(missing)}")
 
-

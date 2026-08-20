@@ -56,4 +56,3 @@ class TransactionGraph:
         edges = self._outgoing[account] + self._incoming[account]
         return tuple(sorted(edges, key=lambda edge: edge.transaction_id))
 
-

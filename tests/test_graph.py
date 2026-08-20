@@ -28,4 +28,3 @@ class GraphTests(TestCase):
         self.assertEqual(graph.neighbors("a", max_depth=1), ("b",))
         self.assertEqual(graph.neighbors("a", max_depth=2), ("b", "c"))
 
-

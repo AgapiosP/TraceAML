@@ -48,4 +48,3 @@ def load_pack(pack_id: str) -> JurisdictionPack:
         disclaimer=value["disclaimer"],
     )
 
-

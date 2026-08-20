@@ -110,4 +110,3 @@ class InvestigationReport:
     related_accounts: tuple[str, ...]
     limitations: tuple[str, ...]
 
-

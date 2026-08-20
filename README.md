@@ -86,4 +86,3 @@ docs/                        architecture, roadmap, and governance notes
 
 See [`CONTRIBUTING.md`](CONTRIBUTING.md). Security issues should follow
 [`SECURITY.md`](SECURITY.md).
-

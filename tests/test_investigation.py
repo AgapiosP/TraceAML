@@ -11,4 +11,3 @@ class InvestigationTests(TestCase):
         with self.assertRaises(EvidenceIntegrityError):
             InvestigationBuilder.validate_claims((Claim("claim", ("missing",)),), (evidence,))
 
-

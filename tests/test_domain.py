@@ -33,4 +33,3 @@ class TransactionTests(TestCase):
                 beneficiary_country="GB",
             )
 
-

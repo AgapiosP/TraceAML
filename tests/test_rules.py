@@ -31,4 +31,3 @@ class RuleTests(TestCase):
     def test_cross_border_rule_ignores_domestic_transfer(self) -> None:
         self.assertIsNone(CrossBorderRule().evaluate(transaction()))
 
-
