@@ -228,6 +228,10 @@ class SQLiteWorkspace:
 
     @contextmanager
     def _transaction(self) -> Iterator[sqlite3.Connection]:
+        if self.connection.in_transaction:
+            # Repository calls participate in the caller's atomic unit of work.
+            yield self.connection
+            return
         self.connection.execute("BEGIN IMMEDIATE")
         try:
             yield self.connection
@@ -237,13 +241,22 @@ class SQLiteWorkspace:
         else:
             self.connection.commit()
 
+    def atomic(self):
+        """Group repository writes and their audit event in one transaction."""
+        return self._transaction()
+
     def _migrate(self) -> None:
         current = self.connection.execute("PRAGMA user_version").fetchone()[0]
         if current > SCHEMA_VERSION:
             raise RuntimeError("database schema is newer than this TraceAML build")
         if current < 1:
             with self._transaction() as connection:
-                connection.executescript(MIGRATION_1)
+                statement = ""
+                for line in MIGRATION_1.splitlines(keepends=True):
+                    statement += line
+                    if sqlite3.complete_statement(statement):
+                        connection.execute(statement)
+                        statement = ""
                 connection.execute(
                     "INSERT INTO schema_migrations(version, applied_at) VALUES (?, ?)",
                     (1, _utc(self.clock())),
@@ -683,3 +696,4 @@ class SQLiteWorkspace:
             }
             for row in rows
         )
+

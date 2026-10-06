@@ -11,3 +11,13 @@ data/*.db
 data/*.sqlite*
 reports/
 work/
+
+
+.venv/
+server/
+demo-server/
+secrets/
+*.key
+*.token
+*.taenc
+*.egg-info/

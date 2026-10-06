@@ -72,3 +72,24 @@ online call.
 - local and remote LLM adapters behind a redaction/policy boundary;
 - signed audit checkpoints and export bundles;
 - synthetic scenario generation and control-effectiveness scoring.
+
+
+## 0.3 private-server service boundary
+
+The authenticated `service.py` FastAPI application opens a separate encrypted
+SQLite connection per endpoint execution. One Uvicorn worker serves the private
+backend; a Caddy reverse proxy terminates HTTPS. Principals come from an operator
+managed secret file and supply tenant/role/actor identity. Public routes expose
+only browser assets and generic health state.
+
+Case mutations, imports, and exports use `workspace.atomic()` to group data and
+audit writes. Revision checks run after `BEGIN IMMEDIATE`, serializing competing
+writers. Notes and reports are stored in encrypted case attributes; the database
+schema remains v1. The HTTP workflow makes closed cases immutable, while offline
+repository operations remain an explicitly privileged operator boundary.
+
+Synthetic provisioning and recovery live in `operations.py`; neither the service
+nor its browser calls an online LLM. LLM adapters remain separate controlled
+extension points. The functional browser uses bearer tokens in tab memory, plain
+DOM text rendering, and same-origin JSON routes. Detailed route and deployment
+contracts are in `api.md` and `deployment.md`.

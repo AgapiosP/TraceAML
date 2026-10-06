@@ -1,0 +1,53 @@
+services:
+  app:
+    build: ..
+    image: traceaml:0.3.0rc1
+    restart: unless-stopped
+    environment:
+      TRACEAML_DATABASE: /data/traceaml.db
+      TRACEAML_FIELD_KEY_FILE: /secrets/field.key
+      TRACEAML_PRINCIPALS_FILE: /secrets/principals.json
+      TRACEAML_KEY_ID: server-v1
+      TRACEAML_ALLOWED_HOSTS: ${TRACEAML_DOMAIN:?Set TRACEAML_DOMAIN},127.0.0.1,localhost
+    volumes:
+      - ../server/data:/data
+      - ../server/secrets:/secrets:ro
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 128
+    mem_limit: 1g
+    cpus: 2
+    networks: [backend]
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: '3'}
+  ingress:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      TRACEAML_DOMAIN: ${TRACEAML_DOMAIN:?Set TRACEAML_DOMAIN}
+    ports: ['443:443', '80:80']
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks: [backend, edge]
+    depends_on:
+      app:
+        condition: service_healthy
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    security_opt: [no-new-privileges:true]
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: '3'}
+networks:
+  backend:
+    internal: true
+  edge: {}
+volumes:
+  caddy_data: {}
+  caddy_config: {}

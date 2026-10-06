@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from dataclasses import asdict
 from datetime import UTC, datetime
 from decimal import Decimal
 from enum import Enum
+from pathlib import Path
 from typing import Any
 
 from .domain import Transaction
@@ -124,6 +126,25 @@ def main(argv: list[str] | None = None) -> int:
     customer_demo.add_argument("--host", default="127.0.0.1")
     customer_demo.add_argument("--port", type=int, default=8765)
     customer_demo.add_argument("--no-browser", action="store_true")
+    provision = subparsers.add_parser("provision", help="create an encrypted server workspace")
+    provision.add_argument("--directory", required=True)
+    provision.add_argument("--tenant-id", default="demo")
+    provision.add_argument("--tenant-name", default="Synthetic demonstration")
+    provision.add_argument("--subject", default="demo-admin")
+    provision.add_argument("--demo", action="store_true", help="seed synthetic cases")
+    serve = subparsers.add_parser("serve", help="run the authenticated private service")
+    serve.add_argument("--config", help="private JSON file containing service environment paths")
+    serve.add_argument("--host", default="127.0.0.1")
+    serve.add_argument("--port", type=int, default=8000)
+    for name in ("backup", "restore"):
+        command = subparsers.add_parser(name, help="encrypted SQLite " + name)
+        command.add_argument("--source", required=True)
+        command.add_argument("--output", required=True)
+        command.add_argument("--key-file", required=True)
+    decrypt = subparsers.add_parser("decrypt-export", help="decrypt a case export offline")
+    decrypt.add_argument("--source", required=True)
+    decrypt.add_argument("--output", required=True)
+    decrypt.add_argument("--key-file", required=True)
     args = parser.parse_args(argv)
     if args.command == "demo":
         print(json.dumps(run_demo(args.pack), indent=2, default=_json_default))
@@ -139,6 +160,61 @@ def main(argv: list[str] | None = None) -> int:
         from .demo import run_demo_server
 
         run_demo_server(args.host, args.port, open_browser=not args.no_browser)
+    elif args.command == "provision":
+        from .operations import provision
+
+        print(
+            json.dumps(
+                provision(
+                    Path(args.directory), args.tenant_id, args.tenant_name, args.subject, args.demo
+                ),
+                indent=2,
+            )
+        )
+    elif args.command == "serve":
+        import logging
+
+        import uvicorn
+
+        logging.basicConfig(level=logging.INFO, format="%(message)s")
+
+        if args.config:
+            from .service import secret_file
+
+            settings = json.loads(secret_file(args.config))
+            for name, value in settings.items():
+                if name.startswith("TRACEAML_"):
+                    os.environ[name] = value
+        uvicorn.run(
+            "traceaml.service:create_app",
+            factory=True,
+            host=args.host,
+            port=args.port,
+            workers=1,
+            proxy_headers=False,
+            access_log=False,
+            timeout_keep_alive=5,
+        )
+    elif args.command in ("backup", "restore"):
+        import base64
+
+        from .operations import backup, restore
+        from .service import secret_file
+
+        key = base64.b64decode(secret_file(args.key_file).strip(), validate=True)
+        operation = backup if args.command == "backup" else restore
+        operation(Path(args.source), Path(args.output), key)
+        print(json.dumps({"output": args.output, "operation": args.command}))
+    elif args.command == "decrypt-export":
+        import base64
+
+        from .operations import write_private
+        from .service import secret_file
+
+        key = base64.b64decode(secret_file(args.key_file).strip(), validate=True)
+        cipher = AESGCMFieldCipher(key, "server-v1")
+        payload = cipher.decrypt_json(Path(args.source).read_bytes(), "traceaml:case-export:v1")
+        write_private(Path(args.output), json.dumps(payload, indent=2).encode())
     return 0
 
 

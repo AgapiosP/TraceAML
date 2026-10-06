@@ -1,0 +1,15 @@
+{
+  "transactions": [
+    {
+      "transaction_id": "synthetic-import-001",
+      "occurred_at": "2026-10-01T10:00:00Z",
+      "amount": "12500.00",
+      "currency": "EUR",
+      "originator_account": "ACCT-NORTHSTAR-01",
+      "beneficiary_account": "ACCT-HARBOR-22",
+      "originator_country": "DE",
+      "beneficiary_country": "GB",
+      "attributes": {"fixture": "synthetic"}
+    }
+  ]
+}

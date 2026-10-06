@@ -33,7 +33,7 @@ class Transaction:
     def __post_init__(self) -> None:
         if not self.transaction_id.strip():
             raise ValueError("transaction_id is required")
-        if self.amount <= 0:
+        if not self.amount.is_finite() or self.amount <= 0:
             raise ValueError("amount must be positive")
         if self.occurred_at.tzinfo is None or self.occurred_at.utcoffset() is None:
             raise ValueError("occurred_at must be timezone-aware")
@@ -112,3 +112,4 @@ class InvestigationReport:
     evidence: tuple[Evidence, ...]
     related_accounts: tuple[str, ...]
     limitations: tuple[str, ...]
+

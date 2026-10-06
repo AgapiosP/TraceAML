@@ -1,25 +1,64 @@
 name: CI
-
 on:
   push:
   pull_request:
-
 permissions:
   contents: read
-
 jobs:
   test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ['3.11', '3.12', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+      - name: Install
+        run: |
+          python -m pip install -r requirements-dev.lock
+          python -m pip install --no-deps -e .
+      - name: Lint
+        run: ruff check .
+      - name: Test
+        run: pytest --cov=traceaml --cov-report=term-missing
+      - name: Package inventory
+        if: matrix.python == '3.12'
+        run: python -m pip inspect > package-inventory.json
+      - uses: actions/upload-artifact@v4
+        if: matrix.python == '3.12'
+        with:
+          name: package-inventory
+          path: package-inventory.json
+  dependencies:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
-          cache: pip
-      - name: Install
-        run: python -m pip install -e ".[dev]"
-      - name: Lint
-        run: ruff check .
-      - name: Test
-        run: pytest --cov=traceaml --cov-report=term-missing
-
+          python-version: '3.12'
+      - run: python -m pip install pip-audit
+      - name: Audit runtime dependencies
+        run: pip-audit -r requirements.lock
+  container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build application image
+        run: docker build -t traceaml:ci .
+      - name: Validate container workspace
+        run: |
+          mkdir smoke-workspace
+          chmod 777 smoke-workspace
+          docker run --rm -v "$PWD/smoke-workspace:/workspace" traceaml:ci traceaml provision --directory /workspace --demo
+          docker run -d --name traceaml-smoke -p 127.0.0.1:8000:8000 -v "$PWD/smoke-workspace:/workspace" -e TRACEAML_DATABASE=/workspace/data/traceaml.db -e TRACEAML_FIELD_KEY_FILE=/workspace/secrets/field.key -e TRACEAML_PRINCIPALS_FILE=/workspace/secrets/principals.json -e TRACEAML_ALLOWED_HOSTS=127.0.0.1,localhost traceaml:ci
+          docker exec traceaml-smoke python -c "import time; time.sleep(3)"
+          docker exec traceaml-smoke python /app/src/traceaml/smoke.py /workspace/secrets/admin.token
+      - name: Container logs
+        if: failure()
+        run: docker logs traceaml-smoke
+      - name: Stop container
+        if: always()
+        run: docker rm -f traceaml-smoke || true
