@@ -1,4 +1,4 @@
-# v0.1 architecture
+# TraceAML architecture
 
 ## Context
 
@@ -7,18 +7,10 @@ monitoring controls. It enriches them with deterministic findings and graph
 context, constructs evidence-bound reports, and records the processing history.
 It does not make or file suspicious-activity decisions.
 
-```text
-source systems
-     |
-     v
-normalization -> rules / future ML -> graph context -> investigation report
-     |                  |                  |                 |
-     +------------------+------------------+-----------------+
-                                |
-                        hash-chained audit log
-                                |
-                         human disposition
-```
+The core pipeline normalizes source activity, evaluates explainable rules, builds
+relationship context, and creates evidence-linked reports. Audit events record
+processing; the authenticated case workspace records the human disposition.
+
 
 ## Modules and dependency rule
 
@@ -33,13 +25,14 @@ normalization -> rules / future ML -> graph context -> investigation report
   storage guarantee; production needs signed checkpoints and restricted storage.
 - **Packs:** versioned regulatory context. Packs configure presentation and
   review context, not legal conclusions.
-- **Pipeline:** coordinates modules and is the only layer that knows the workflow.
+- **Pipeline:** coordinates the deterministic engine modules. The service layer owns
+  authenticated case workflow and durable units of work.
 
 ## Trust boundaries
 
 All transaction fields, upstream alerts, pack files, model outputs, and retrieved
 documents are untrusted input. LLM content must never be treated as instructions,
-executable code, or a decision. Connectors and persistence will use ports/adapters
+executable code, or a decision. Persistence and LLM integrations use explicit boundaries; future connectors use ports/adapters
 so that secrets and raw data do not leak into domain logic.
 
 ## Evidence contract
@@ -65,12 +58,12 @@ online call.
 ## Planned extension ports
 
 - transaction and upstream-alert connectors;
-- PostgreSQL repositories and multi-user transaction coordination;
+- PostgreSQL repositories and scalable transaction coordination;
 - batch and streaming rule engines;
 - calibrated model scorer plus model cards and drift evidence;
 - graph-store adapter;
 - local and remote LLM adapters behind a redaction/policy boundary;
-- signed audit checkpoints and export bundles;
+- external signed audit checkpoints and independently verifiable export bundles;
 - synthetic scenario generation and control-effectiveness scoring.
 
 

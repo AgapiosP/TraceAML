@@ -48,3 +48,17 @@ Polymorphic relationship endpoints are validated by the application. A later
 migration will add an entity registry to give those endpoints database-level foreign
 keys without sacrificing extensibility.
 
+
+## Case workflow attributes in 0.3.0rc1
+
+Encrypted case attributes carry integer revision (default 1 for older cases),
+append-only note objects (ID, author, timestamp, text), optional subject account,
+human disposition, latest evidence-linked report, and report scope. This preserves
+schema v1 compatibility. The service checks revisions inside the write transaction
+and rejects changes after closure. Older offline repository methods remain
+operator tools and do not themselves enforce HTTP lifecycle rules.
+
+Reports can be replaced by a new investigation; immutable audit entries identify
+the report ID and event, but full historical report payloads are not retained
+automatically. Export and retain reviewed versions when your evidence policy
+requires historical payloads.
