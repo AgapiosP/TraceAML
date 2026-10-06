@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from decimal import Decimal, InvalidOperation
-from enum import StrEnum
+from enum import Enum, StrEnum
 from typing import Any
 
 
@@ -13,6 +13,9 @@ class Severity(StrEnum):
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
+
+    # Preserve the existing public string representation.
+    __str__ = Enum.__str__
 
 
 @dataclass(frozen=True, slots=True)
