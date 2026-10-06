@@ -20,8 +20,9 @@ const port=8127,base=`http://127.0.0.1:${port}`;
 const server=spawn(python,['-m','traceaml.cli','serve','--config',path.join(directory,'service.json'),'--port',String(port)],{stdio:'ignore'});
 let browser;
 const errors=[];
+const accessibilityFailures=[];
 async function login(page,value=token){await page.locator('#token').fill(value);await page.locator('#login-submit').click();await page.locator('#case-content').waitFor();}
-async function accessible(page,label){const result=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze();assert.deepEqual(result.violations.map(x=>({id:x.id,nodes:x.nodes.map(n=>n.target)})),[],`${label}: accessibility violations`);}
+async function accessible(page,label){const result=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze();if(result.violations.length)accessibilityFailures.push({label,violations:result.violations.map(x=>({id:x.id,nodes:x.nodes.map(n=>({target:n.target,summary:n.failureSummary}))}))});}
 async function main(){
  for(let i=0;i<100;i++){try{if((await fetch(base+'/health/ready')).ok)break;}catch{}if(i===99)throw Error('Service did not start');await new Promise(r=>setTimeout(r,100));}
  browser=await chromium.launch();
@@ -99,6 +100,7 @@ async function main(){
  await page.locator('#tab-transactions').click();await page.locator('#transaction-rows button').first().click();assert.equal(await page.locator('#review-submit').isDisabled(),true);
  await accessible(page,'Viewer read-only transaction');
  assert.deepEqual(errors,[],'Browser JavaScript errors');
+ assert.deepEqual(accessibilityFailures,[],'Accessibility checks');
  console.log('Browser acceptance passed: evidence, transaction reviews, notes, imports, case lifecycle, export, audit, persistence, roles, keyboard, responsive layout, and accessibility.');
 }
 main().catch(async error=>{console.error(error);if(browser){const page=browser.contexts()[0]?.pages()[0];if(page){fs.mkdirSync('gui-artifacts',{recursive:true});await page.screenshot({path:'gui-artifacts/failure.png',fullPage:true}).catch(()=>{});}}process.exitCode=1;}).finally(async()=>{if(browser)await browser.close();server.kill();fs.rmSync(home,{recursive:true,force:true});});
