@@ -16,7 +16,9 @@ Provisioning writes:
 Files are created with mode 0600 on POSIX. On Windows, enforce equivalent NTFS
 ACLs manually. Restrict all parent directories and do not put them in source
 control. The container's UID must be able to read mounted secrets. Startup rejects
-missing, oversized, or group/world-writable secret files. It validates configured
+missing or oversized secret files and, on POSIX systems, group/world-writable
+secret files. Windows mode bits do not represent NTFS ACLs; restrict access using
+Windows file/folder Security properties or your organization's ACL tooling. It validates configured
 tenants, decryptability, and their audit chains.
 
 Tokens must be high entropy, individual, time-limited, and delivered through an

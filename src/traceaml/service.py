@@ -39,8 +39,11 @@ MAX_BODY = 1_048_576
 
 def secret_file(path: str) -> bytes:
     source = Path(path)
-    if not source.is_file() or source.stat().st_mode & 0o022:
-        raise ValueError("secret files must exist and must not be group/world writable")
+    if not source.is_file():
+        raise ValueError("secret file must exist")
+    # Windows st_mode does not represent NTFS ACLs. Enforce ACLs at the OS level.
+    if os.name != "nt" and source.stat().st_mode & 0o022:
+        raise ValueError("secret files must not be group/world writable")
     if source.stat().st_size > 131_072:
         raise ValueError("secret file too large")
     return source.read_bytes()

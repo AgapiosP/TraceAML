@@ -286,8 +286,13 @@ def test_secret_configuration_and_safe_logs(environment, monkeypatch, caplog):
     source = home / "unsafe.json"
     source.write_text("[]")
     source.chmod(0o666)
-    with pytest.raises(ValueError, match="writable"):
-        secret_file(str(source))
+    import os
+
+    if os.name != "nt":
+        with pytest.raises(ValueError, match="writable"):
+            secret_file(str(source))
+    else:
+        assert secret_file(str(source)) == b"[]"
     with caplog.at_level(logging.INFO, logger="traceaml.access"):
         client.get("/v1/cases", headers=auth(tokens))
     assert tokens["admin"] not in caplog.text
@@ -310,3 +315,20 @@ def test_tampered_export_and_backup_are_rejected(environment, tmp_path):
     with pytest.raises(InvalidTag):
         restore(output, tmp_path / "corrupt.db", b"b" * 32)
     assert not (tmp_path / "corrupt.db").exists()
+
+
+def test_windows_secret_reads_use_acl_boundary(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+
+    from traceaml import service
+
+    source = tmp_path / "service.json"
+    source.write_bytes(b'{"synthetic":true}')
+    source.chmod(0o666)
+    monkeypatch.setattr(service, "os", SimpleNamespace(name="nt"))
+    assert service.secret_file(str(source)) == b'{"synthetic":true}'
+    with pytest.raises(ValueError, match="exist"):
+        service.secret_file(str(tmp_path / "missing.json"))
+    source.write_bytes(b"x" * 131_073)
+    with pytest.raises(ValueError, match="large"):
+        service.secret_file(str(source))
