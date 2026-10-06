@@ -25,7 +25,8 @@ async function accessible(page,label){const result=await new AxeBuilder({page}).
 async function main(){
  for(let i=0;i<100;i++){try{if((await fetch(base+'/health/ready')).ok)break;}catch{}if(i===99)throw Error('Service did not start');await new Promise(r=>setTimeout(r,100));}
  browser=await chromium.launch();
- const page=await browser.newPage({viewport:{width:1440,height:1000},reducedMotion:'reduce'});
+ const context=await browser.newContext({viewport:{width:1440,height:1000},reducedMotion:'reduce'});
+ const page=await context.newPage();
  page.on('pageerror',error=>errors.push(error.message));
  await page.goto(base);
  await accessible(page,'Sign in');
