@@ -85,3 +85,26 @@ once you have confirmed it contains no data or keys you need.
 | AES authentication failure at startup | Restore the correct field key and database pair; never generate a replacement key over existing data. |
 | Provision directory not empty | Choose a new directory; provisioning never overwrites credentials. |
 | Encrypted workspace files inaccessible | Check ownership and restrictive file permissions. |
+
+## Update an existing Windows CMD demo
+
+If `demo-server` is already provisioned, keep it: it contains your database, keys,
+and access token. Stop the running server with **Ctrl+C**, then run:
+
+```bat
+cd C:\Users\agapi\TraceAML
+git pull --ff-only
+.venv\Scripts\python.exe -m pip install --no-deps -e .
+.venv\Scripts\traceaml.exe serve --config demo-server\service.json
+```
+
+Open http://127.0.0.1:8000 and press **Ctrl+F5** to reload the browser assets.
+Sign in using your existing token from `demo-server\secrets\admin.token`.
+The updated workspace uses the existing encrypted cases and adds review records
+as you save them; no reprovisioning or database migration is needed.
+
+Choose **Northstar → Transactions → Inspect**, read the supporting observations,
+and save a review decision with your rationale. **Evidence** shows the facts as
+source-linked cards, while **Activity & notes** records saved assessments and notes.
+Use **Manage case** for assignment and lifecycle changes. To close a case, move
+it into review first and enter a human disposition.
