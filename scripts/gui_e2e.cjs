@@ -9,7 +9,7 @@ const AxeBuilder = require('@axe-core/playwright').default;
 const python = process.env.TRACEAML_TEST_PYTHON || 'python';
 const home = fs.mkdtempSync(path.join(os.tmpdir(), 'traceaml-gui-'));
 const directory = path.join(home, 'workspace');
-execFileSync(python, ['-m', 'traceaml', 'provision', '--directory', directory, '--demo'], {stdio:'ignore'});
+execFileSync(python, ['-m', 'traceaml.cli', 'provision', '--directory', directory, '--demo'], {stdio:['ignore','ignore','inherit']});
 const token = fs.readFileSync(path.join(directory, 'secrets/admin.token'),'utf8').trim();
 const principalsFile=path.join(directory,'secrets/principals.json');
 const principals=JSON.parse(fs.readFileSync(principalsFile,'utf8'));
@@ -17,7 +17,7 @@ const viewerToken='v'.repeat(43);
 principals.push({...principals[0],subject:'viewer',role:'viewer',token_hash:require('node:crypto').createHash('sha256').update(viewerToken).digest('hex')});
 fs.writeFileSync(principalsFile,JSON.stringify(principals),{mode:0o600});
 const port=8127,base=`http://127.0.0.1:${port}`;
-const server=spawn(python,['-m','traceaml','serve','--config',path.join(directory,'service.json'),'--port',String(port)],{stdio:'ignore'});
+const server=spawn(python,['-m','traceaml.cli','serve','--config',path.join(directory,'service.json'),'--port',String(port)],{stdio:'ignore'});
 let browser;
 const errors=[];
 async function login(page,value=token){await page.locator('#token').fill(value);await page.locator('#login-submit').click();await page.locator('#case-content').waitFor();}
@@ -100,4 +100,4 @@ async function main(){
  assert.deepEqual(errors,[],'Browser JavaScript errors');
  console.log('Browser acceptance passed: evidence, transaction reviews, notes, imports, case lifecycle, export, audit, persistence, roles, keyboard, responsive layout, and accessibility.');
 }
-main().catch(error=>{console.error(error);process.exitCode=1;}).finally(async()=>{if(browser)await browser.close();server.kill();fs.rmSync(home,{recursive:true,force:true});});
+main().catch(async error=>{console.error(error);if(browser){const page=browser.contexts()[0]?.pages()[0];if(page){fs.mkdirSync('gui-artifacts',{recursive:true});await page.screenshot({path:'gui-artifacts/failure.png',fullPage:true}).catch(()=>{});}}process.exitCode=1;}).finally(async()=>{if(browser)await browser.close();server.kill();fs.rmSync(home,{recursive:true,force:true});});
