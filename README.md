@@ -39,7 +39,8 @@ The encrypted workspace contains three labelled synthetic cases: Northstar,
 Orion, and Ember; seven transactions; account records; evidence-linked reports;
 and tenant audit events. No real customer data or external LLM calls are used.
 
-Try: select Northstar → set **In review** → add a note → run an investigation →
+Try: select Northstar → **Transactions → Inspect** → save an assessment →
+**Manage case** → set **In review** → add a note → refresh the investigation →
 verify the audit chain → enter a human disposition → set **Closed** → download
 an encrypted case export. Each update is durable and audited. Reload a case if
 another investigator has changed its revision.
@@ -55,8 +56,9 @@ no authentication and must not be exposed as the production service.
 - Individual expiring bearer tokens stored as SHA-256 hashes in server config;
   viewer, analyst, and admin roles; tenant identity comes from the token.
 - Browser case workspace with creation, assignment, revision checks, notes,
-  human disposition, immutable closed cases, and evidence display.
-- Account creation and bounded JSON transaction import with atomic validation;
+  human disposition, immutable closed cases, readable source-linked evidence cards,
+  and attributed transaction assessments with a review history.
+- Account creation and bounded JSON/CSV browser import with atomic validation;
   CSV-to-JSON conversion helper.
 - Deterministic evidence-linked investigations and EU/UK/US/Australia context packs.
 - Encrypted case exports and encrypted SQLite-consistent backup/restore commands.
@@ -92,7 +94,8 @@ pytest --cov=traceaml --cov-report=term-missing
 ```
 
 CI checks Python 3.11, 3.12, and 3.13; audits runtime dependencies; builds the
-container; and exercises an authenticated synthetic workspace in the container.
+container; exercises an authenticated synthetic workspace in the container; and
+checks browser workflows, responsive layouts, and automated accessibility rules.
 The runtime dependency snapshot is in `requirements.lock`; update and audit it
 before releasing. This is a single-server, bounded-workload architecture, not
 an HA or large-bank monitoring system.

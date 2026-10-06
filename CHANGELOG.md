@@ -1,5 +1,15 @@
 # Changelog
 
+## Workspace refinement
+
+- Redesigned the authenticated GUI with a responsive investigation desk, case
+  queue, readable evidence cards, source inspection, and an activity timeline.
+- Added encrypted transaction assessments, required rationales, retained history,
+  revision checks, role/tenant boundaries, and atomic audit records.
+- Included downstream report-graph transactions in the review view, added tenant
+  totals and queue pagination, and enabled direct CSV import in the browser.
+- Added real-browser workflow, responsive layout, and automated accessibility CI.
+
 ## 0.3.0rc1 — private-server deployment candidate
 
 - Added authenticated FastAPI service and individual expiring tenant/role tokens.

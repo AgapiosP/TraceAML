@@ -21,3 +21,6 @@ secrets/
 *.token
 *.taenc
 *.egg-info/
+
+node_modules/
+gui-artifacts/

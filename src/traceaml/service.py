@@ -28,6 +28,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 from . import __version__
 from .domain import Transaction
 from .entities import Account, AccountStatus, CaseStatus, InvestigationCase
+from .packs import load_pack
 from .security import AESGCMFieldCipher
 from .storage import SQLiteWorkspace
 
@@ -142,6 +143,12 @@ class NewAccount(StrictModel):
 class Investigation(StrictModel):
     revision: int = Field(ge=1)
     pack_id: str = "eu"
+
+
+class TransactionReview(StrictModel):
+    revision: int = Field(ge=1)
+    decision: str
+    comment: str = Field(min_length=1, max_length=4000)
 
 
 class ImportBatch(StrictModel):
@@ -306,7 +313,18 @@ def create_app(config: ServiceConfig | None = None) -> FastAPI:
     @app.get("/v1/me")
     def me(request: Request):
         p = authorize(request)
-        return {"subject": p.subject, "tenant_id": p.tenant_id, "role": p.role}
+        return {
+            "subject": p.subject,
+            "tenant_id": p.tenant_id,
+            "role": p.role,
+            "assignees": sorted(
+                {
+                    x.subject
+                    for x in config.principals
+                    if x.tenant_id == p.tenant_id and x.role != "viewer"
+                }
+            ),
+        }
 
     @app.get("/v1/openapi.json")
     def schema(request: Request):
@@ -342,7 +360,16 @@ def create_app(config: ServiceConfig | None = None) -> FastAPI:
                 "ORDER BY updated_at DESC, case_id LIMIT ? OFFSET ?",
                 (p.tenant_id, limit, offset),
             ).fetchall()
-            return {"items": [case_json(find_case(db, p.tenant_id, row[0])) for row in rows]}
+            counts = db.connection.execute(
+                "SELECT status, COUNT(*) FROM investigation_cases "
+                "WHERE tenant_id=? GROUP BY status",
+                (p.tenant_id,),
+            ).fetchall()
+            return {
+                "items": [case_json(find_case(db, p.tenant_id, row[0])) for row in rows],
+                "total": sum(row[1] for row in counts),
+                "counts": dict(counts),
+            }
 
     @app.post("/v1/cases", status_code=201)
     def new_case(request: Request, body: NewCase):
@@ -450,20 +477,129 @@ def create_app(config: ServiceConfig | None = None) -> FastAPI:
             )
         return case_json(updated)
 
+    def case_transactions(db, case):
+        # Include the subject and accounts from the saved evidence graph, including
+        # downstream demo movements. Always remain inside the authenticated tenant.
+        report = case.attributes.get("report") or {}
+        accounts = set(report.get("related_accounts", []))
+        subject = case.attributes.get("subject_account")
+        if subject:
+            accounts.add(subject)
+        if len(accounts) > 100:
+            raise HTTPException(409, "case exceeds the 100-account review limit")
+        transactions = {}
+        for aid in sorted(accounts):
+            for tx in db.list_transactions_for_account(case.tenant_id, aid, limit=1001):
+                transactions[tx.transaction_id] = tx
+                if len(transactions) > 1000:
+                    raise HTTPException(409, "case exceeds the 1000-transaction review limit")
+        return sorted(
+            transactions.values(), key=lambda t: (t.occurred_at, t.transaction_id), reverse=True
+        )
+
     @app.get("/v1/cases/{case_id}/evidence")
     def evidence(request: Request, case_id: str):
         p = authorize(request)
         with workspace() as db:
             case = find_case(db, p.tenant_id, case_id)
-            subject = case.attributes.get("subject_account")
-            transactions = (
-                db.list_transactions_for_account(p.tenant_id, subject, limit=1000)
-                if subject
-                else ()
-            )
+            report = case.attributes.get("report")
+            transactions = case_transactions(db, case)
+            pack_id = (report or {}).get("pack_id", next(iter(case.jurisdiction_packs), "eu"))
             return {
-                "report": case.attributes.get("report"),
+                "report": report,
                 "transactions": [t.to_dict() for t in transactions],
+                "reviews": case.attributes.get("transaction_reviews", {}),
+                "pack": asdict(load_pack(pack_id)),
+                "scope": "subject and accounts in the latest saved report graph",
+            }
+
+    @app.post("/v1/cases/{case_id}/transactions/{transaction_id}/review")
+    def review_transaction(
+        request: Request, case_id: str, transaction_id: str, body: TransactionReview
+    ):
+        p = authorize(request, write=True)
+        if body.decision not in {"reviewed", "escalated"} or not body.comment.strip():
+            raise HTTPException(422, "choose a review decision and provide a rationale")
+        with workspace() as db, db.atomic():
+            case = find_case(db, p.tenant_id, case_id)
+            check_revision(case, body.revision)
+            if transaction_id not in {t.transaction_id for t in case_transactions(db, case)}:
+                raise HTTPException(404, "transaction not found in this case")
+            reviews = dict(case.attributes.get("transaction_reviews", {}))
+            previous = list(reviews.get(transaction_id, {}).get("history", []))
+            if len(previous) >= 100:
+                raise HTTPException(409, "transaction review history limit reached")
+            entry = {
+                "id": uuid4().hex,
+                "decision": body.decision,
+                "comment": body.comment.strip(),
+                "reviewer": p.subject,
+                "reviewed_at": datetime.now(UTC).isoformat(),
+            }
+            previous.append(entry)
+            reviews[transaction_id] = {**entry, "history": previous}
+            updated = replace(
+                case,
+                updated_at=datetime.now(UTC),
+                attributes={
+                    **case.attributes,
+                    "revision": body.revision + 1,
+                    "transaction_reviews": reviews,
+                },
+            )
+            db.put_case(updated)
+            db.append_audit(
+                p.tenant_id,
+                "transaction.reviewed",
+                p.subject,
+                {
+                    "case_id": case_id,
+                    "transaction_id": transaction_id,
+                    "decision": body.decision,
+                    "review_id": entry["id"],
+                },
+            )
+        return case_json(updated)
+
+    @app.get("/v1/cases/{case_id}/activity")
+    def activity(request: Request, case_id: str):
+        p = authorize(request)
+        with workspace() as db:
+            case = find_case(db, p.tenant_id, case_id)
+            notes = {n["id"]: n["text"] for n in case.attributes.get("notes", [])}
+            comments = {
+                r["id"]: r["comment"]
+                for review in case.attributes.get("transaction_reviews", {}).values()
+                for r in review.get("history", [review])
+            }
+            rows = db.connection.execute(
+                "SELECT * FROM audit_events WHERE tenant_id=? ORDER BY sequence DESC LIMIT 1000",
+                (p.tenant_id,),
+            ).fetchall()
+            items = []
+            for row in rows:
+                payload = db._decrypt(
+                    row["payload_cipher"], f"audit:{p.tenant_id}:{row['sequence']}"
+                )
+                if payload.get("case_id") != case_id:
+                    continue
+                items.append(
+                    {
+                        "kind": row["event_type"],
+                        "actor": row["actor"],
+                        "at": row["occurred_at"],
+                        "sequence": row["sequence"],
+                        "text": notes.get(
+                            payload.get("note_id"), comments.get(payload.get("review_id"), "")
+                        ),
+                        "transaction_id": payload.get("transaction_id"),
+                        "decision": payload.get("decision"),
+                        "status": payload.get("status"),
+                    }
+                )
+            return {
+                "items": items,
+                "scope": "case events within the latest 1000 tenant audit events",
             }
 
     @app.post("/v1/accounts", status_code=201)

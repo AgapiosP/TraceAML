@@ -332,3 +332,96 @@ def test_windows_secret_reads_use_acl_boundary(tmp_path, monkeypatch):
     source.write_bytes(b"x" * 131_073)
     with pytest.raises(ValueError, match="large"):
         service.secret_file(str(source))
+
+
+def test_transaction_reviews_scope_history_activity_and_revision(environment):
+    client, config, tokens, _ = environment
+    headers = auth(tokens)
+    case = "/v1/cases/case-northstar"
+    evidence = client.get(case + "/evidence", headers=headers).json()
+    assert {t["transaction_id"] for t in evidence["transactions"]} == {
+        "TX-78421",
+        "TX-78453",
+        "TX-78604",
+    }
+    assert evidence["pack"]["pack_id"] == "eu"
+    assert evidence["reviews"] == {}
+    endpoint = case + "/transactions/TX-78453/review"
+    body = {"revision": 1, "decision": "reviewed", "comment": "Downstream source checked."}
+    assert client.post(endpoint, json=body, headers=auth(tokens, "viewer")).status_code == 403
+    assert client.post(endpoint, json=body, headers=auth(tokens, "other")).status_code == 404
+    assert (
+        client.post(case + "/transactions/unknown/review", json=body, headers=headers).status_code
+        == 404
+    )
+    assert (
+        client.post(endpoint, json={**body, "decision": "cleared"}, headers=headers).status_code
+        == 422
+    )
+    assert (
+        client.post(endpoint, json={**body, "comment": "   "}, headers=headers).status_code == 422
+    )
+    response = client.post(endpoint, json=body, headers=headers)
+    assert response.status_code == 200
+    assert response.json()["revision"] == 2
+    assert client.post(endpoint, json=body, headers=headers).status_code == 409
+    response = client.post(
+        endpoint,
+        json={**body, "revision": 2, "decision": "escalated", "comment": "Further context needed."},
+        headers=headers,
+    )
+    assert response.json()["revision"] == 3
+    saved = client.get(case + "/evidence", headers=auth(tokens, "viewer")).json()
+    review = saved["reviews"]["TX-78453"]
+    assert review["decision"] == "escalated"
+    assert [r["decision"] for r in review["history"]] == ["reviewed", "escalated"]
+    assert review["reviewer"] == "admin"
+    activity = client.get(case + "/activity", headers=headers)
+    assert activity.status_code == 200
+    events = activity.json()["items"]
+    assert events[0]["kind"] == "transaction.reviewed"
+    assert events[0]["text"] == "Further context needed."
+    assert events[0]["transaction_id"] == "TX-78453"
+    assert client.get(case + "/activity", headers=auth(tokens, "other")).status_code == 404
+    other_events = client.get("/v1/cases/case-orion/activity", headers=headers).json()["items"]
+    assert not any(e["kind"] == "transaction.reviewed" for e in other_events)
+    assert client.get("/v1/audit/verify", headers=headers).json()["valid"]
+    with SQLiteWorkspace(config.database, config.cipher) as db:
+        stored = db.connection.execute(
+            "SELECT attributes_cipher FROM investigation_cases WHERE case_id='case-northstar'"
+        ).fetchone()[0]
+        assert b"Further context needed" not in stored
+
+
+def test_transaction_review_atomic_failure_and_closed_case(environment, monkeypatch):
+    client, _, tokens, _ = environment
+    headers = auth(tokens)
+    case = "/v1/cases/case-northstar"
+    endpoint = case + "/transactions/TX-78421/review"
+    body = {"revision": 1, "decision": "reviewed", "comment": "Synthetic review."}
+    with monkeypatch.context() as patch:
+
+        def fail(*args, **kwargs):
+            raise RuntimeError("synthetic failure")
+
+        patch.setattr(SQLiteWorkspace, "append_audit", fail)
+        assert client.post(endpoint, json=body, headers=headers).status_code == 500
+    assert client.get(case, headers=headers).json()["revision"] == 1
+    assert client.get(case + "/evidence", headers=headers).json()["reviews"] == {}
+    client.patch(case, json={"revision": 1, "status": "in_review"}, headers=headers)
+    client.patch(
+        case, json={"revision": 2, "status": "closed", "disposition": "Synthetic."}, headers=headers
+    )
+    assert client.post(endpoint, json={**body, "revision": 3}, headers=headers).status_code == 409
+
+
+def test_queue_counts_and_assignable_principals(environment):
+    client, _, tokens, _ = environment
+    data = client.get("/v1/cases?limit=1&offset=1", headers=auth(tokens)).json()
+    assert len(data["items"]) == 1
+    assert data["total"] == 3
+    assert sum(data["counts"].values()) == 3
+    me = client.get("/v1/me", headers=auth(tokens)).json()
+    assert "admin" in me["assignees"]
+    assert "other" not in me["assignees"]
+    assert "viewer" not in me["assignees"]

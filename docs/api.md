@@ -14,14 +14,16 @@ There is no unauthenticated Swagger page. The browser uses the same API.
 | --- | --- | --- | --- |
 | GET | `/health/live` | public | Process liveness and version |
 | GET | `/health/ready` | public | Storage integrity and configured tenants' audit validity |
-| GET | `/v1/me` | viewer | Current subject, tenant, role |
+| GET | `/v1/me` | viewer | Current subject, tenant, role, same-tenant assignees |
 | GET | `/v1/openapi.json` | viewer | Machine-readable schema |
-| GET | `/v1/cases?limit=50&offset=0` | viewer | Case page; limit 1–100 |
+| GET | `/v1/cases?limit=50&offset=0` | viewer | Case page, tenant total and status counts; limit 1–100 |
 | POST | `/v1/cases` | analyst | Create a case |
 | GET | `/v1/cases/{case_id}` | viewer | Case and revision |
 | PATCH | `/v1/cases/{case_id}` | analyst | State, assignee, disposition |
 | POST | `/v1/cases/{case_id}/notes` | analyst | Append an investigator note |
-| GET | `/v1/cases/{case_id}/evidence` | viewer | Latest report and direct subject transactions |
+| GET | `/v1/cases/{case_id}/evidence` | viewer | Latest report, graph-context transactions, reviews, pack metadata |
+| GET | `/v1/cases/{case_id}/activity` | viewer | Case events within latest 1,000 tenant audit events |
+| POST | `/v1/cases/{case_id}/transactions/{transaction_id}/review` | analyst | Save an attributed transaction assessment |
 | POST | `/v1/cases/{case_id}/investigate` | analyst | Persist explainable report |
 | POST | `/v1/cases/{case_id}/export` | viewer | Audited encrypted export |
 | POST | `/v1/accounts` | analyst | Create an account |
@@ -113,3 +115,24 @@ controls at a trusted gateway for higher traffic.
 Responses carry `Cache-Control: no-store` and an `X-Request-ID`. Mutations do not
 support generic idempotency keys; inspect current state before retrying after a
 network interruption. Transaction IDs provide duplicate prevention for imports.
+
+## Transaction review
+
+```json
+{"revision": 3, "decision": "escalated", "comment": "Source movement needs further context."}
+```
+
+Decisions are `reviewed` or `escalated`; a nonblank rationale (maximum 4,000
+characters) is required. The transaction must belong to the case review scope
+within the authenticated tenant. Missing case/transaction returns 404; a stale
+revision, closed case, or history limit returns 409. Viewers receive 403.
+The response is the updated case with its incremented revision. Assessments are
+stored in encrypted `attributes.transaction_reviews`, retaining chronological
+history (maximum 100 per transaction), and audited atomically.
+
+Evidence responses include `reviews`, `pack`, and `scope` alongside the existing
+report and transactions. Scope includes movements associated with the subject
+and accounts from the latest saved report graph (100 accounts / 1,000 unique
+transactions maximum). Activity responses contain `items` with kind, actor, at,
+sequence, text, transaction ID, decision, and status when applicable. They expose
+only this case's events in the most recent 1,000 tenant audit records.

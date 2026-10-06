@@ -46,17 +46,46 @@ direct transactions for the case's subject account; it rejects larger inputs.
 It does not promise exhaustive multi-hop detection across all tenant activity.
 The original seeded reports also include their scenario's downstream transactions.
 
-A new case can have an optional existing subject account. The **Run explainable
-investigation** action recalculates and persists the case report and advances its
+A new case can have an optional existing subject account. The **Refresh investigation** action recalculates and persists the case report and advances its
 revision. Previously exported reports remain separate immutable files; the case
 stores its latest report rather than a complete report-version history.
 
-The browser is a functional case workspace. The legacy polished demonstration
-at port 8765 is separate, read-only, and synthetic.
+The authenticated workspace has four case sections:
+
+- **Overview**: investigation brief, observed movements, review progress, pack
+  context, and audit verification. Counts reflect saved data, not a risk score.
+- **Transactions**: search/filter the case movements, choose **Inspect**, examine
+  the amount, accounts, date, countries, and source-linked observations, then
+  save **Reviewed** or **Escalated for follow-up** with a required rationale.
+- **Evidence**: readable finding cards with observed facts, source transaction
+  links, evidence IDs, observation time, and report limitations.
+- **Activity & notes**: attributed audit events, review rationales, and investigator
+  notes. The timeline covers case events in the latest 1,000 tenant audit events.
+
+Transaction assessments are encrypted with the case, retain up to 100 historical
+assessments per transaction, advance the case revision, and commit atomically
+with an audit event. Escalating a transaction does not change the case status;
+use **Manage case** to change its lifecycle and assignment. Reviewers should
+reassess affected movements after refreshing an investigation or importing data.
+The view includes the subject and accounts in the latest saved report graph,
+including downstream movements; it rejects more than 100 accounts or 1,000 unique
+transactions instead of silently truncating them. This is broader than the direct
+subject input used when recalculating a report.
+
+**Manage case** restricts status choices to valid transitions. Closed cases show
+their human disposition in the brief and disable write controls. Viewers can
+inspect evidence and transaction histories, but cannot save changes.
+
+The legacy demonstration at port 8765 remains separate, read-only, and synthetic.
+The workspace uses semantic tables, keyboard-operable tabs, native modal dialogs,
+visible focus states, responsive layouts, and reduced-motion support. Browser CI
+checks the core workflows and automated WCAG A/AA rules; these checks do not
+replace an independent accessibility audit.
 
 ## Import
 
-Create account IDs first using `POST /v1/accounts`; accounts are tenant scoped.
+Create account IDs first using **Import data → Create an account** or
+`POST /v1/accounts`; accounts are tenant scoped.
 Upload JSON shaped as `{"transactions": [...]}`. The sample in
 `examples/transactions.synthetic.json` illustrates mandatory fields. Amounts
 are decimal strings; timestamps require timezone offsets; country/currency codes
@@ -68,7 +97,9 @@ row indexes. The server does not retain rejected input: the returned report is
 the quarantine outcome. Preserve the source and error report in your approved
 intake system; do not dump rejected personal data into logs.
 
-For CSV, use headers matching the transaction fields and convert first:
+The browser accepts CSV directly with headers matching the transaction fields.
+Quoted fields are supported; the optional `attributes` column must contain a JSON
+object. Amounts stay decimal text. Alternatively, convert and validate offline:
 
 ```bash
 python examples/convert_csv.py input.csv converted.json
@@ -90,6 +121,7 @@ separately from routine user tokens.
 
 ## Browser limits
 
-The workspace shows the first 100 cases. Integrations can page through all cases
-using the API. A case supports at most 1,000 notes. Transaction ingestion does
+The queue pages through 25 cases at a time. Search and status filters apply to
+the loaded page; total summary cards cover the entire tenant. Integrations can
+page through all cases using the API. A case supports at most 1,000 notes. Transaction ingestion does
 not automatically create alerts or cases; create and investigate a case explicitly.
