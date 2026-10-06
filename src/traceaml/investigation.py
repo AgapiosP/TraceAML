@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from hashlib import sha256
 
 from .domain import Claim, Evidence, Finding, InvestigationReport
@@ -23,7 +23,7 @@ class InvestigationBuilder:
         pack: JurisdictionPack,
         created_at: datetime | None = None,
     ) -> InvestigationReport:
-        created_at = created_at or datetime.now(timezone.utc)
+        created_at = created_at or datetime.now(UTC)
         finding_list = tuple(findings)
         evidence = tuple(item for finding in finding_list for item in finding.evidence)
         claims = tuple(

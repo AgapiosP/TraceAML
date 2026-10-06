@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 from unittest import TestCase
 
@@ -9,7 +9,7 @@ from traceaml.graph import TransactionGraph
 def tx(identifier: str, source: str, target: str) -> Transaction:
     return Transaction(
         transaction_id=identifier,
-        occurred_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+        occurred_at=datetime(2026, 1, 1, tzinfo=UTC),
         amount=Decimal("1"),
         currency="USD",
         originator_account=source,

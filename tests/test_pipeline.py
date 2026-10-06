@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 from unittest import TestCase
 
@@ -12,7 +12,7 @@ class PipelineTests(TestCase):
         engine.ingest(
             Transaction(
                 transaction_id="synthetic-1",
-                occurred_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+                occurred_at=datetime(2026, 1, 1, tzinfo=UTC),
                 amount=Decimal("15000"),
                 currency="USD",
                 originator_account="a",
@@ -22,7 +22,7 @@ class PipelineTests(TestCase):
             )
         )
         report = engine.investigate(
-            "a", "us", created_at=datetime(2026, 1, 2, tzinfo=timezone.utc)
+            "a", "us", created_at=datetime(2026, 1, 2, tzinfo=UTC)
         )
         self.assertEqual(len(report.claims), 2)
         evidence_ids = {item.evidence_id for item in report.evidence}
@@ -33,7 +33,7 @@ class PipelineTests(TestCase):
     def test_duplicate_transaction_is_rejected(self) -> None:
         transaction = Transaction(
             transaction_id="duplicate",
-            occurred_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+            occurred_at=datetime(2026, 1, 1, tzinfo=UTC),
             amount=Decimal("1"),
             currency="USD",
             originator_account="a",
